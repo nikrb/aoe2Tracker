@@ -25,7 +25,6 @@
       {#if t.building.includes(building.name) && t.type !== "unique"}
         <UnitCard
           onResearched={onResearched}
-          number_of_dots={t.available}
           info={t}>
         </UnitCard>
       {/if}
@@ -34,7 +33,6 @@
       {#if d.building === building.name}
         <UnitCard
           onResearched={onResearched}
-          number_of_dots={d.available}
           info={d}>
         </UnitCard>
       {/if}
@@ -43,7 +41,6 @@
       {#if t.building.includes(building.name) && t.type === "unique"}
         <UnitCard
           onResearched={onResearched}
-          number_of_dots={t.available}
           info={t}>
         </UnitCard>
       {/if}

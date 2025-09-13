@@ -4,14 +4,19 @@
 
   let civdesc;
 
-  const changeMyCiv = (() => {
-    changeCiv(selected);
-  });
-  changeMyCiv();
+const changeMyCiv = (() => {
+	changeCiv(selected);
+});
+function init(el){
+    el.focus()
+}
+
+changeMyCiv();
+
 </script>
 
 <div class="civcount">
-  <select bind:value={selected} on:change="{changeMyCiv}" >
+  <select bind:value={selected} on:change={changeMyCiv} use:init >
     {#each civnames as civname}
       <option value={civname}>
         {civname}

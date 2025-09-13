@@ -1,5 +1,4 @@
 <script>
-  export let resources;
   let gameMsecs = 0, gameTime="0:00:00";
   let playback = false;
   let recording = [];
