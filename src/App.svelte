@@ -149,7 +149,7 @@ Promise.all([aoe2_strings_fetch, aoe2_data_fetch])
 			<Civlist {changeCiv} {civnames}/>
 		</div>
 		<div>
-			<Track {display_units} {display_techs} {display_buildings}/>
+			<Track {display_units} {display_techs}/>
 		</div>
 	</main>
 {:else}
