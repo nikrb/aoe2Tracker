@@ -12,9 +12,10 @@
   function onClick(){
     onResearched(info);
   }
+  function dummyKeydown(){}
 </script>
 
-<div class="col" on:click={onClick}>
+<div class="col" on:click={onClick} on:keydown={dummyKeydown}>
 <div class="popup-container" >
   <div class="icons">
     <img src="{'https://aoe2techtree.net/img/'+

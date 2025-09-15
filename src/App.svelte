@@ -24,7 +24,7 @@ function populateCivNames(){
 
 function changeCiv(selected) {
 	const civdescid = aoe2data.civ_helptexts[selected];
-	const civdesc = aoe2strings[civdescid]
+	const civdesc = aoe2strings[civdescid];
 	// don't think we mutate units_of_interest, so shouldn't need this
 	const uoi = units_of_interest.slice();
 	const civ_units = aoe2data.techtrees[selected]["units"];

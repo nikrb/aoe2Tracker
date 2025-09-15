@@ -1,162 +1,208 @@
 <script>
-  // TODO rewind playback transport
-  import TechSummary from './TechSummary.svelte';
-  import UnitCard from './UnitCard.svelte';
-  export let display_units, display_techs;
-  let message_id = 0;
-  let messageq = [];
-  let wood = 0, food = 0, gold = 0, stone = 0;
-  let startTime, gameMsecs, gameTime="0:00:00";
-  let playback = false;
-  let recording = [];
-  let recIndex = 0;
-  let interval = 0, timeout = 0;
-  let techText = "";
-  let ages_info = {
-    info_type: "age",
-    researched: 0,
-    available: 3,
-    info_list: [
-      {type: "ages", name: "Feudal Age", id: "feudal_age_de", Cost: {Food: 500}, ResearchTime: 130},
-      {type: "ages", name: "Castle Age", id: "castle_age_de", Cost: {Food: 800, Gold: 200}, ResearchTime: 160},
-      {type: "ages", name: "Imperial Age", id: "imperial_age_de", Cost: {Food: 1000, Gold: 800}, ResearchTime: 190},
-    ]
-  };
-  
-  reset();
-  function reset(){
-    techText = "";
-    startTime = Date.now();
-    gameMsecs = 0;
-    wood = food = gold = stone = 0;
-    ages_info.researched = 0;
-    ages_info = ages_info;
-    display_units.forEach(e => e.researched = 0);
-    display_techs.forEach(e => e.researched = 0);
-    display_units = display_units;
-    display_techs = display_techs;
-    recIndex = 0;
-    if(timeout) clearTimeout(timeout);
-    timeout = 0;
-    if(interval) clearInterval(interval);
-    if(playback){
-      interval = setInterval( play, 625);    
-    } else {
-      recording = [];
-      interval = setInterval( record, 625);
-    }
-  }
-  function doTimeInc() {  
-    if( playback) {
-      // fast forward adjusts gameMsecs
-      gameMsecs += 625;
-    } else {
-      // attempt to sync with game time, doesn't work though, still gain
-      gameMsecs = (Date.now() - startTime) * 1.7;
-    } 
-    let h,m,s;
-    h = Math.floor(gameMsecs/1000/60/60);
-    m = Math.floor((gameMsecs/1000/60/60 - h)*60);
-    s = Math.floor(((gameMsecs/1000/60/60 - h)*60 - m)*60);
-    s < 10 ? s = `0${s}`: s = `${s}`;
-    m < 10 ? m = `0${m}`: m = `${m}`;
-    gameTime = `${h}:${m}:${s}`;
-  }
-  function clearTechText(){
-    timeout = 0;
-    techText = "";
-  }
-  function play() {
-    doTimeInc();
-    if( recIndex < recording.length ) {
-      while(recIndex < recording.length && gameMsecs > recording[recIndex].t) {
-        if(recording[recIndex].type === "key")
-          keyUpdate(recording[recIndex].code);
-        else {
-          if(timeout) clearTimeout(timeout);
-          const unit = recording[recIndex].code;
-          techText = unit.info_list[unit.researched].name;
-          timeout = setTimeout(clearTechText, 2000);
-          const delay = unit.info_list[unit.researched].ResearchTime * 1000;
-          setTimeout(onResearchFinished, delay, unit);
-          if( unit.researched++ > unit.available-1) unit.researched = 0;
-          ages_info = ages_info;
-          display_units = display_units;
-          display_techs = display_techs;
-        }
-        recIndex++;
-      }
-    } else {
-      clearInterval(interval);
-    }
-  }
-  function timeForward(){ 
-    gameMsecs = recording[recIndex].t;
-  }
-  function timeBackward(){
-    // TODO nope!
-    recIndex = recIndex?recIndex-1:0;
-    gameMsecs = recording[recIndex].t;
-  }
-  function record(){
-    doTimeInc();
-  }
-  function onplay(){
-    playback = true;
-    reset();
-  }
-  function onrecord(){
-    playback = false;
-    reset();
-  }
-  function keyUpdate(code){
-    switch(code) {
-      case 'KeyA':
-        wood++;
-        break;
-      case 'KeyS':
-        food++;
-        break;
-      case 'KeyD':
-        gold++;
-        break;
-      case 'KeyF':
-        stone++;
-        break;
-      case 'KeyZ':
-        if( wood-- < 1) wood = 0;
-        break;
-      case 'KeyX':
-        if( food-- < 1) food = 0;
-        break;
-      case 'KeyC':
-        if( gold-- < 1) gold = 0;
-        break;
-      case 'KeyV':
-        if( stone-- < 1) stone = 0;
-        break;
-    }
-  }
-  function onkeyDown(e){
-    if(playback) return;
-    recording.push({t: gameMsecs, type:"key", code: e.code});
-    keyUpdate(e.code);
-  }
-  function onResearchFinished(unit) {
-    techText = unit.info_list[unit.researched-1].name+" finished";
-    setTimeout(clearTechText, 2000);
-  }
-  function researched(unit) {
-    if(playback) return;
-    const delay = unit.info_list[unit.researched].ResearchTime * 625;
-    setTimeout(onResearchFinished, delay, unit);
-    if( unit.researched++ > unit.available-1) unit.researched = 0;
-    // we could check info_type and just assign one, but is it worth it?
-    ages_info = ages_info;
-    display_units = display_units;
-    display_techs = display_techs;
-    recording.push({t: gameMsecs, type:"research", code: unit});
-  }
+	// TODO rewind playback transport
+	import TechSummary from './TechSummary.svelte';
+	import UnitCard from './UnitCard.svelte';
+	import htmlTemplate from '../assets/htmlTemplate.txt?raw';
+	export let display_units, display_techs;
+	let message_id = 0;
+	let messageq = [];
+	let wood = 0, food = 0, gold = 0, stone = 0;
+	let startTime, gameMsecs, gameTime="0:00:00";
+	let playback = false;
+	let recording = [];
+	let recIndex = 0;
+	let interval = 0, timeout = 0;
+	let techText = "";
+	let ages_info = {
+		info_type: "age",
+		researched: 0,
+		available: 3,
+		info_list: [
+		{type: "ages", name: "Feudal Age", id: "feudal_age_de", Cost: {Food: 500}, ResearchTime: 130},
+		{type: "ages", name: "Castle Age", id: "castle_age_de", Cost: {Food: 800, Gold: 200}, ResearchTime: 160},
+		{type: "ages", name: "Imperial Age", id: "imperial_age_de", Cost: {Food: 1000, Gold: 800}, ResearchTime: 190},
+		]
+	};
+	
+	reset();
+	function reset(){
+		techText = "";
+		startTime = Date.now();
+		gameMsecs = 0;
+		wood = food = gold = stone = 0;
+		ages_info.researched = 0;
+		ages_info = ages_info;
+		display_units.forEach(e => e.researched = 0);
+		display_techs.forEach(e => e.researched = 0);
+		display_units = display_units;
+		display_techs = display_techs;
+		recIndex = 0;
+		if(timeout) clearTimeout(timeout);
+		timeout = 0;
+		if(interval) clearInterval(interval);
+	}
+	function startPlayback(){
+		interval = setInterval( play, 625);    
+	}
+	function startRecording(){
+		reset();
+		recording = [];
+		interval = setInterval( record, 625);
+	}
+	function doTimeInc() {  
+		if( playback) {
+		// fast forward adjusts gameMsecs
+			gameMsecs += 625;
+		} else {
+		// attempt to sync with game time, doesn't work though, still gain
+			gameMsecs = (Date.now() - startTime) * 1.7;
+		} 
+		let h,m,s;
+		h = Math.floor(gameMsecs/1000/60/60);
+		m = Math.floor((gameMsecs/1000/60/60 - h)*60);
+		s = Math.floor(((gameMsecs/1000/60/60 - h)*60 - m)*60);
+		s < 10 ? s = `0${s}`: s = `${s}`;
+		m < 10 ? m = `0${m}`: m = `${m}`;
+		gameTime = `${h}:${m}:${s}`;
+	}
+	function clearTechText(){
+		timeout = 0;
+		techText = "";
+	}
+	function play() {
+		doTimeInc();
+		if( recIndex < recording.length ) {
+			while(recIndex < recording.length && gameMsecs > recording[recIndex].t) {
+				if(recording[recIndex].type === "key")
+					keyUpdate(recording[recIndex].code, recording[recIndex].count);
+				else {
+					if(timeout) clearTimeout(timeout);
+					const unit = recording[recIndex].code;
+					techText = unit.info_list[unit.researched].name;
+					timeout = setTimeout(clearTechText, 2000);
+					const delay = unit.info_list[unit.researched].ResearchTime * 1000;
+					setTimeout(onResearchFinished, delay, unit);
+					if( unit.researched++ > unit.available-1) unit.researched = 0;
+					ages_info = ages_info;
+					display_units = display_units;
+					display_techs = display_techs;
+				}
+				recIndex++;
+			}
+		} else {
+			clearInterval(interval);
+		}
+	}
+	function timeForward(){ 
+		gameMsecs = recording[recIndex].t;
+	}
+	function timeBackward(){
+		// TODO nope!
+		recIndex = recIndex?recIndex-1:0;
+		gameMsecs = recording[recIndex].t;
+	}
+	function record(){
+		doTimeInc();
+	}
+	function onplay(){
+		playback = true;
+		reset();
+		startPlayback();
+	}
+	function onrecord(){
+		playback = false;
+		startRecording();
+	}
+	function keyUpdate(code, count = 1){
+		switch(code) {
+		case 'KeyA':
+			wood += count;
+			break;
+		case 'KeyS':
+			food += count;
+			break;
+		case 'KeyD':
+			gold += count;
+			break;
+		case 'KeyF':
+			stone += count;
+			break;
+		case 'KeyZ':
+			wood -= count;
+			if( wood < 0) wood = 0;
+			break;
+		case 'KeyX':
+			food -= count;
+			if( food < 0) food = 0;
+			break;
+		case 'KeyC':
+			gold -= count;
+			if( gold < 0) gold = 0;
+			break;
+		case 'KeyV':
+			stone -= count;
+			if( stone < 0) stone = 0;
+			break;
+		}
+	}
+	function onkeyDown(e){
+		if(playback) return;
+		if( e.shiftKey){
+			// add the increment to the last entry
+			const t = recording[recording.length-1];
+			t.count++;
+		} else {
+			recording.push({t: gameMsecs, type:"key", code: e.code, count:1});
+		}
+		keyUpdate(e.code, 1);
+	}
+	function onResearchFinished(unit) {
+		techText = unit.info_list[unit.researched-1].name+" finished";
+		setTimeout(clearTechText, 2000);
+	}
+	function researched(unit) {
+		if(playback) return;
+		const delay = unit.info_list[unit.researched].ResearchTime * 625;
+		setTimeout(onResearchFinished, delay, unit);
+		if( unit.researched++ > unit.available-1) unit.researched = 0;
+		// we could check info_type and just assign one, but is it worth it?
+		ages_info = ages_info;
+		display_units = display_units;
+		display_techs = display_techs;
+		recording.push({t: gameMsecs, type:"research", code: unit});
+	}
+
+	function generateReport(){
+		console.log("Recording length:", recording.length);
+		let report = htmlTemplate;
+		reset();
+		recording.forEach((e, ndx) => {
+			if(e.type === "key"){
+				keyUpdate(recording[ndx].code, recording[ndx].count);
+				report += `<div></div><div>${wood}</div> <div>${food}</div> <div>${gold}</div> <div>${stone}</div>\n`;
+			}
+			else if(e.type === "research") {
+				report += `<div>${e.code.info_list[e.code.researched].name}</div><div></div><div></div><div></div><div></div>\n`;
+			}
+		});
+		report += "</div>\n</body>\n</html>\n";
+		return report;
+	}
+	function saveReport(text) {
+		const blob = new Blob([text], { type: "text/plain" });
+		const url = URL.createObjectURL(blob);
+
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = "report.html";
+		a.click();
+
+		URL.revokeObjectURL(url);
+	}
+	function onReport() {
+		const text = generateReport();
+		saveReport(text);
+	}
 </script>
 
 <svelte:window on:keydown={onkeyDown}/>
@@ -165,6 +211,7 @@
   <button on:click={onplay}>Play</button>
   <button on:click={onrecord}>Record</button>
   {playback?"playback":"recording"}
+  <button on:click={onReport}>Report</button>
   <article class="timer">
     Time
     <input class="gametime" type="text" bind:value={gameTime}/>
