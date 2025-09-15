@@ -54,14 +54,16 @@
 <style>
   .row {
     display: flex;
+	flex-direction: column;
   }
   .col {
     display: flex;
-    flex-direction: column;
+	align-items: flex-start;
     flex: 10%;
   }
   .building {
     display: flex;
-    justify-content: center;
+    justify-content:flex-end;
+	width: 7rem;
   }
 </style>
