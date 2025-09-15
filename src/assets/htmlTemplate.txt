@@ -2,17 +2,17 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>4-Column Grid</title>
+  <title>Aoe2 Build Tracker</title>
   <style>
     .grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
+      grid-template-columns: 3fr repeat(4, 1fr);
 	  width:500px;
     }
     .grid div {
-      background: lightgrey;
-      padding: 20px;
+      padding: 5px;
+	  border-top: 1px solid lightgrey;
+	  border-right: 1px solid lightgrey;
       text-align: center;
     }
   </style>
