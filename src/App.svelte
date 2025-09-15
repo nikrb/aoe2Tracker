@@ -83,7 +83,14 @@ function changeCiv(selected) {
 	// TODO: remove next, not used
 	// TODO: remove available - we can count info_list
 	display_units = unit_detail.reduce((acc, cur)=>{
-		if(acc.length === 0) return [{...cur, available: 1, info_type: "unit", next: true, info_list:[cur]}];
+		if(acc.length === 0) return [{
+			...cur, 
+			available: 1, 
+			researched: 0,
+			info_type: "unit", 
+			next: true, 
+			info_list:[cur]
+		}];
 		const last = acc[acc.length-1];
 		if( last.type === cur.type) {
 			last.available += 1;
@@ -93,13 +100,20 @@ function changeCiv(selected) {
 		return [...acc, {
 			...cur, 
 			available:1,
+			researched:0,
 			info_type: "unit",
 			info_list:[cur],
 			next: last.building !== cur.building?true:false,
 		}];
 	}, []);
 	display_techs = tech_detail.reduce((acc, cur) => {
-		if( acc.length === 0) return [{...cur, available: 1, info_type: "tech", info_list: [cur]}];
+		if( acc.length === 0) return [{
+			...cur, 
+			available: 1, 
+			researched: 0,
+			info_type: "tech", 
+			info_list: [cur]
+		}];
 		const last = acc[acc.length-1];
 		if( last.building === cur.building && last.type !== "unique" && last.type === cur.type ) {
 			last.available += 1;
@@ -109,6 +123,7 @@ function changeCiv(selected) {
 		return [...acc, {
 			...cur,
 			available: 1,
+			researched: 0,
 			info_type: "tech",
 			info_list: [cur],
 		}];
@@ -130,8 +145,7 @@ const aoe2_data_fetch = fetch('https://raw.githubusercontent.com/SiegeEngineers/
 		// Do something with the JSON data
 		aoe2data = data;
 		populateCivNames();
-		// This just boots us - civ is actually set in civdesc.svelte
-		changeCiv("Aztecs");
+		changeCiv("Armenians");
 	})
 	.catch(error => console.error('Error fetching JSON:', error));
 
