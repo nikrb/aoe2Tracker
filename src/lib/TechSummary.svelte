@@ -26,24 +26,24 @@
 				<!-- blacksmith tech first -->
 				{#if t.building.includes(building.name) && t.type !== "unique"}
 					<UnitCard
-					onResearched={onResearched}
-					info={t}>
+						onResearched={onResearched}
+						info={t}>
 					</UnitCard>
 				{/if}
 			{/each}
 			{#each display_units as d}
 				{#if d.building === building.name}
 					<UnitCard
-					onResearched={onResearched}
-					info={d}>
+						onResearched={onResearched}
+						info={d}>
 					</UnitCard>
 				{/if}
 			{/each}
 			{#each display_techs as t}
 				{#if t.building.includes(building.name) && t.type === "unique"}
 					<UnitCard
-					onResearched={onResearched}
-					info={t}>
+						onResearched={onResearched}
+						info={t}>
 					</UnitCard>
 				{/if}
 			{/each}

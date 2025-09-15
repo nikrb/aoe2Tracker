@@ -43,7 +43,7 @@
     {/each}
     {#if show_info}
       <div class="popup">
-        <Popup info="{info}" info_index="{info_index}"/>
+        <Popup info={info} info_index={info_index}/>
       </div>
     {/if}
   </div>
