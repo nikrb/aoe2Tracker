@@ -83,35 +83,35 @@ function changeCiv(selected) {
 	// TODO: remove next, not used
 	// TODO: remove available - we can count info_list
 	display_units = unit_detail.reduce((acc, cur)=>{
-	if(acc.length === 0) return [{...cur, available: 1, info_type: "unit", next: true, info_list:[cur]}];
-	const last = acc[acc.length-1];
-	if( last.type === cur.type) {
-		last.available += 1;
-		last.info_list = last.info_list.concat(cur);
-		return acc;
-	}
-	return [...acc, {
-		...cur, 
-		available:1,
-		info_type: "unit",
-		info_list:[cur],
-		next: last.building !== cur.building?true:false,
-	}];
+		if(acc.length === 0) return [{...cur, available: 1, info_type: "unit", next: true, info_list:[cur]}];
+		const last = acc[acc.length-1];
+		if( last.type === cur.type) {
+			last.available += 1;
+			last.info_list = last.info_list.concat(cur);
+			return acc;
+		}
+		return [...acc, {
+			...cur, 
+			available:1,
+			info_type: "unit",
+			info_list:[cur],
+			next: last.building !== cur.building?true:false,
+		}];
 	}, []);
 	display_techs = tech_detail.reduce((acc, cur) => {
-	if( acc.length === 0) return [{...cur, available: 1, info_type: "tech", info_list: [cur]}];
-	const last = acc[acc.length-1];
-	if( last.building === cur.building && last.type !== "unique" && last.type === cur.type ) {
-		last.available += 1;
-		last.info_list = last.info_list.concat(cur);
-		return acc;
-	}
-	return [...acc, {
-		...cur,
-		available: 1,
-		info_type: "tech",
-		info_list: [cur],
-	}];
+		if( acc.length === 0) return [{...cur, available: 1, info_type: "tech", info_list: [cur]}];
+		const last = acc[acc.length-1];
+		if( last.building === cur.building && last.type !== "unique" && last.type === cur.type ) {
+			last.available += 1;
+			last.info_list = last.info_list.concat(cur);
+			return acc;
+		}
+		return [...acc, {
+			...cur,
+			available: 1,
+			info_type: "tech",
+			info_list: [cur],
+		}];
 	}, []);
 	return {civdesc, display_units, display_techs, display_unique};
 };
@@ -146,10 +146,10 @@ Promise.all([aoe2_strings_fetch, aoe2_data_fetch])
 {#if load_complete}
 	<main>
 		<div>
-			<Civlist changeCiv={changeCiv} civnames={civnames}/>
+			<Civlist {changeCiv} {civnames}/>
 		</div>
 		<div>
-			<Track display_units={display_units} display_techs={display_techs} />
+			<Track {display_units} {display_techs} {display_buildings}/>
 		</div>
 	</main>
 {:else}
