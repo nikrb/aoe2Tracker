@@ -1,6 +1,6 @@
 <script>
   export let changeCiv, civnames;
-  let selected = "Aztecs";
+  let selected = "Armenians";
 
   let civdesc;
 
@@ -10,8 +10,6 @@ const changeMyCiv = (() => {
 function init(el){
     el.focus()
 }
-
-changeMyCiv();
 
 </script>
 
