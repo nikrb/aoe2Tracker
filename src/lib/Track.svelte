@@ -1,5 +1,9 @@
 <script>
 	// TODO rewind playback transport
+	// each unit and tech has its own timeouts, research and text.
+	// the research timeout triggers research completion and displays text
+	// the text timeout is for 2 seconds and clears the research finished text
+	// units are actually unit tech upgrades, e.g. archer -> crossbowman
 	import TechSummary from './TechSummary.svelte';
 	import UnitCard from './UnitCard.svelte';
 	import htmlTemplate from '../assets/htmlTemplate.txt?raw';
@@ -181,6 +185,7 @@
 	}
 	function onResearchFinished(unit) {
 		unit.research_timeout = 0;
+		clearTimeout(unit.text_timeout);
 		techText = unit.info_list[unit.researched-1].name+" finished";
 		unit.text_timeout = setTimeout(clearTechText, 2000, unit);
 	}
@@ -188,7 +193,7 @@
 		if(playback) return;
 
 		clearTimeout(unit.research_timeout);
-		
+
 		clearTimeout(unit.text_timeout);
 		unit.text_timeout = 0;
 
