@@ -214,10 +214,10 @@
 		recording.forEach(e => {
 			if(e.type === "key"){
 				keyUpdate(e.code, e.count);
-				report += `<div></div><div>${wood}</div> <div>${food}</div> <div>${gold}</div> <div>${stone}</div>\n`;
+				report += `<div>${e.t}</div><div>${wood}</div> <div>${food}</div> <div>${gold}</div> <div>${stone}</div>\n`;
 			}
 			else if(e.type === "research") {
-				report += `<div>${e.code.info_list[e.code.researched].name}</div><div></div><div></div><div></div><div></div>\n`;
+				report += `<div>${e.t}-${e.code.info_list[e.code.researched].name}</div><div></div><div></div><div></div><div></div>\n`;
 			}
 		});
 		report += "</div>\n</body>\n</html>\n";
@@ -318,8 +318,8 @@
     padding: 0 1em;
   }
   input{
-    /* width: 3em; */
-	font-size: 2rem;
-	padding: 1rem;
+    width: 3em;
+	font-size: 1rem;
+	padding: 0.5rem;
   }
 </style>
