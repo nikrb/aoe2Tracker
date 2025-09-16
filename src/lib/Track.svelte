@@ -11,7 +11,8 @@
 	let playback = false;
 	let recording = [];
 	let recIndex = 0;
-	let interval = 0, timeout = 0;
+	// interval for playback or recording
+	let interval = 0;
 	let techText = "";
 	let ages_info = {
 		info_type: "age",
@@ -31,15 +32,32 @@
 		gameMsecs = 0;
 		wood = food = gold = stone = 0;
 		ages_info.researched = 0;
-		ages_info = ages_info;
+		clearTimeout( ages_info.timeout);
+		ages_info.timeout = 0;
+
 		display_units.forEach(e => e.researched = 0);
 		display_techs.forEach(e => e.researched = 0);
+		recIndex = 0;
+
+		display_units.forEach(e => {
+			if(e.research_timeout) clearTimeout(e.research_timeout);
+			e.research_timeout = 0;
+			if(e.text_timeout) clearTimeout(e.text_timeout);
+			e.text_timeout = 0;
+		});
+		display_techs.forEach(e => {
+			if(e.research_timeout) clearTimeout(e.research_timeout);
+			e.research_timeout = 0;
+			if(e.text_timeout) clearTimeout(e.text_timeout);
+			e.text_timeout = 0;
+		});
+		if(interval) clearInterval(interval);
+		interval = 0;
+
+		// nbmk: do we need all these to force update?
+		ages_info = ages_info;
 		display_units = display_units;
 		display_techs = display_techs;
-		recIndex = 0;
-		if(timeout) clearTimeout(timeout);
-		timeout = 0;
-		if(interval) clearInterval(interval);
 	}
 	function startPlayback(){
 		interval = setInterval( play, 625);    
@@ -65,8 +83,8 @@
 		m < 10 ? m = `0${m}`: m = `${m}`;
 		gameTime = `${h}:${m}:${s}`;
 	}
-	function clearTechText(){
-		timeout = 0;
+	function clearTechText(unit){
+		unit.text_timeout = 0;
 		techText = "";
 	}
 	function play() {
@@ -76,13 +94,17 @@
 				if(recording[recIndex].type === "key")
 					keyUpdate(recording[recIndex].code, recording[recIndex].count);
 				else {
-					if(timeout) clearTimeout(timeout);
+					clearTimeout(unit.text_timeout);
 					const unit = recording[recIndex].code;
 					techText = unit.info_list[unit.researched].name;
-					timeout = setTimeout(clearTechText, 2000);
+					unit.text_timeout = setTimeout(clearTechText, 2000, unit);
+
 					const delay = unit.info_list[unit.researched].ResearchTime * 1000;
-					setTimeout(onResearchFinished, delay, unit);
-					if( unit.researched++ > unit.available-1) unit.researched = 0;
+					unit.research_timeout = setTimeout(onResearchFinished, delay, unit);
+
+					if( unit.researched < unit.available-1) unit.researched++;
+
+					// nbmk: do we need all these to force update?
 					ages_info = ages_info;
 					display_units = display_units;
 					display_techs = display_techs;
@@ -91,6 +113,7 @@
 			}
 		} else {
 			clearInterval(interval);
+			interval = 0;
 		}
 	}
 	function timeForward(){ 
@@ -147,7 +170,7 @@
 	}
 	function onkeyDown(e){
 		if(playback) return;
-		if( e.shiftKey){
+		if( e.shiftKey && recording.length > 0){
 			// add the increment to the last entry
 			const t = recording[recording.length-1];
 			t.count++;
@@ -157,13 +180,20 @@
 		keyUpdate(e.code, 1);
 	}
 	function onResearchFinished(unit) {
+		unit.research_timeout = 0;
 		techText = unit.info_list[unit.researched-1].name+" finished";
-		setTimeout(clearTechText, 2000);
+		unit.text_timeout = setTimeout(clearTechText, 2000, unit);
 	}
 	function researched(unit) {
 		if(playback) return;
+
+		clearTimeout(unit.research_timeout);
+		
+		clearTimeout(unit.text_timeout);
+		unit.text_timeout = 0;
+
 		const delay = unit.info_list[unit.researched].ResearchTime * 625;
-		setTimeout(onResearchFinished, delay, unit);
+		unit.research_timeout = setTimeout(onResearchFinished, delay, unit);
 		if( unit.researched++ > unit.available-1) unit.researched = 0;
 		// we could check info_type and just assign one, but is it worth it?
 		ages_info = ages_info;
@@ -176,9 +206,9 @@
 		console.log("Recording length:", recording.length);
 		let report = htmlTemplate;
 		reset();
-		recording.forEach((e, ndx) => {
+		recording.forEach(e => {
 			if(e.type === "key"){
-				keyUpdate(recording[ndx].code, recording[ndx].count);
+				keyUpdate(e.code, e.count);
 				report += `<div></div><div>${wood}</div> <div>${food}</div> <div>${gold}</div> <div>${stone}</div>\n`;
 			}
 			else if(e.type === "research") {
@@ -283,6 +313,8 @@
     padding: 0 1em;
   }
   input{
-    width: 3em;
+    /* width: 3em; */
+	font-size: 2rem;
+	padding: 1rem;
   }
 </style>
