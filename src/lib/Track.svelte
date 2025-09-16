@@ -7,6 +7,7 @@
 	import TechSummary from './TechSummary.svelte';
 	import UnitCard from './UnitCard.svelte';
 	import htmlTemplate from '../assets/htmlTemplate.txt?raw';
+	import Counter from './Counter.svelte';
 	export let display_units, display_techs;
 	let message_id = 0;
 	let messageq = [];
@@ -143,34 +144,43 @@
 	function keyUpdate(code, count = 1){
 		switch(code) {
 		case 'KeyA':
+		case 'wood':
 			wood += count;
 			break;
 		case 'KeyS':
+		case 'food':
 			food += count;
 			break;
 		case 'KeyD':
+		case 'gold':
 			gold += count;
 			break;
 		case 'KeyF':
+		case 'stone':
 			stone += count;
 			break;
 		case 'KeyZ':
 			wood -= count;
-			if( wood < 0) wood = 0;
 			break;
 		case 'KeyX':
 			food -= count;
-			if( food < 0) food = 0;
 			break;
 		case 'KeyC':
 			gold -= count;
-			if( gold < 0) gold = 0;
 			break;
 		case 'KeyV':
 			stone -= count;
-			if( stone < 0) stone = 0;
 			break;
 		}
+		if( wood < 0) wood = 0;
+		if( food < 0) food = 0;
+		if( gold < 0) gold = 0;
+		if( stone < 0) stone = 0;
+	}
+	function ResourceUpdate(label, amount){
+		if( playback) return;
+		recording.push({t: gameMsecs, type:"key", code: label, count: amount});
+		keyUpdate(label, amount);
 	}
 	function onkeyDown(e){
 		if(playback) return;
@@ -242,52 +252,43 @@
 
 <svelte:window on:keydown={onkeyDown}/>
 <main>
-  <button on:click={reset} >Reset</button>
-  <button on:click={onplay}>Play</button>
-  <button on:click={onrecord}>Record</button>
-  {playback?"playback":"recording"}
-  <button on:click={onReport}>Report</button>
-  <article class="timer">
-    Time
-    <input class="gametime" type="text" bind:value={gameTime}/>
-    {#if playback}
-      <!-- <button on:click={timeBackward} class="transport-button">{"<"}</button> -->
-      <button on:click={timeForward} class="transport-button">></button>
-    {/if}
-    <!-- <label class:fadeit={techText !== ""}>{techText}</label> -->
-    {techText}
-  </article>
-  <article>
-  <div class="res">
-    age
-    <UnitCard
-      onResearched={researched}
-      info={ages_info}>
-    </UnitCard>
-  </div>
-  <div class="res">
-    wood
-    <input type="number" bind:value={wood} />
-  </div>
-  <div class="res">
-    food
-    <input type="number" bind:value={food} />
-  </div>
-  <div class="res">
-    gold
-    <input type="number" bind:value={gold} />
-  </div>
-  <div class="res">
-    stone
-    <input type="number" bind:value={stone} />
-  </div>
-  </article>
-  <div>
-    <TechSummary 
-      researched={researched}
-      display_units={display_units} 
-      display_techs={display_techs} />
-  </div>
+	<button on:click={reset} >Reset</button>
+	<button on:click={onplay}>Play</button>
+	<button on:click={onrecord}>Record</button>
+	{playback?"playback":"recording"}
+	<button on:click={onReport}>Report</button>
+	<article class="timer">
+		Time
+		<input class="gametime" type="text" bind:value={gameTime}/>
+		{#if playback}
+			<!-- <button on:click={timeBackward} class="transport-button">{"<"}</button> -->
+			<button on:click={timeForward} class="transport-button">></button>
+		{/if}
+		<!-- <label class:fadeit={techText !== ""}>{techText}</label> -->
+		{techText}
+	</article>
+  	<article>
+		<div>
+			age
+			<UnitCard
+				onResearched={researched}
+				info={ages_info}>
+			</UnitCard>
+		</div>
+	</article>
+	<div class="counter-container">
+		<Counter bind:value={wood} label="wood" {ResourceUpdate}/>
+		<Counter bind:value={food} label="food"  {ResourceUpdate}/>
+		<Counter bind:value={gold} label="gold"  {ResourceUpdate}/>
+		<Counter bind:value={stone} label="stone"  {ResourceUpdate}/>
+	</div>
+	<div>
+		<TechSummary 
+			researched={researched}
+			display_units={display_units} 
+			display_techs={display_techs} 
+		/>
+	</div>
 </main>
 
 <style>
@@ -312,14 +313,10 @@
     width: 4em;
     border-style: none;
   }
-  .res {
-    display: flex;
-    flex-direction: column;
-    padding: 0 1em;
-  }
-  input{
-    width: 3em;
-	font-size: 1rem;
-	padding: 0.5rem;
+  .counter-container {
+	display: flex;
+	justify-content: center;
+	gap: 1em;
+	margin-bottom: 1em;
   }
 </style>
