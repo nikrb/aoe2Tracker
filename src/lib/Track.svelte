@@ -72,21 +72,25 @@
 		recording = [];
 		interval = setInterval( record, 625);
 	}
-	function doTimeInc() {  
-		if( playback) {
-		// fast forward adjusts gameMsecs
-			gameMsecs += 625;
-		} else {
-		// attempt to sync with game time, doesn't work though, still gain
-			gameMsecs = (Date.now() - startTime) * 1.7;
-		} 
+	function formatTime(msecs){
 		let h,m,s;
-		h = Math.floor(gameMsecs/1000/60/60);
-		m = Math.floor((gameMsecs/1000/60/60 - h)*60);
-		s = Math.floor(((gameMsecs/1000/60/60 - h)*60 - m)*60);
+		h = Math.floor(msecs/1000/60/60);
+		m = Math.floor((msecs/1000/60/60 - h)*60);
+		s = Math.floor(((msecs/1000/60/60 - h)*60 - m)*60);
 		s < 10 ? s = `0${s}`: s = `${s}`;
 		m < 10 ? m = `0${m}`: m = `${m}`;
-		gameTime = `${h}:${m}:${s}`;
+		return `${h}:${m}:${s}`;
+	}
+	function doTimeInc() {  
+		if( playback) {
+			// fast forward adjusts gameMsecs
+			gameMsecs += 625;
+		} else {
+			// attempt to sync with game time, doesn't work though, still gain
+			gameMsecs = (Date.now() - startTime) * 1.7;
+			console.log("new gamesecs:", gameMsecs);
+		}
+		gameTime = formatTime(gameMsecs);
 	}
 	function clearTechText(unit){
 		unit.text_timeout = 0;
@@ -144,54 +148,81 @@
 	function keyUpdate(code, count = 1){
 		switch(code) {
 		case 'KeyA':
-		case 'wood':
 			wood += count;
 			break;
 		case 'KeyS':
-		case 'food':
 			food += count;
 			break;
 		case 'KeyD':
-		case 'gold':
 			gold += count;
 			break;
 		case 'KeyF':
-		case 'stone':
 			stone += count;
 			break;
 		case 'KeyZ':
 			wood -= count;
+			if( wood < 0) wood = 0;
 			break;
 		case 'KeyX':
 			food -= count;
+			if( food < 0) food = 0;
 			break;
 		case 'KeyC':
 			gold -= count;
+			if( gold < 0) gold = 0;
 			break;
 		case 'KeyV':
 			stone -= count;
+			if( stone < 0) stone = 0;
 			break;
 		}
-		if( wood < 0) wood = 0;
-		if( food < 0) food = 0;
-		if( gold < 0) gold = 0;
-		if( stone < 0) stone = 0;
+	}
+	function getKeyCodeFromLabel(label, amount){
+		let keycode = null;
+		switch(label) {
+			case 'wood':
+				keycode = amount > 0 ? 'KeyA' : 'KeyZ';
+				break;
+			case 'food':
+				keycode = amount > 0 ? 'KeyS' : 'KeyX';
+				break;
+			case 'gold':
+				keycode = amount > 0 ? 'KeyD' : 'KeyC';
+				break;
+			case 'stone':
+				keycode = amount > 0 ? 'KeyF' : 'KeyV';
+				break;
+			default:
+				break;
+		}
+		return keycode;
 	}
 	function ResourceUpdate(label, amount){
 		if( playback) return;
-		recording.push({t: gameMsecs, type:"key", code: label, count: amount});
-		keyUpdate(label, amount);
+		const keycode = getKeyCodeFromLabel(label, amount);
+		console.log("game secs:", gameMsecs);
+		if (recording.length > 0 &&
+				gameMsecs - recording[recording.length-1].t < 1000 &&
+				recording[recording.length-1].code === keycode ){
+			console.log("last gamesecs:", recording[recording.length-1].t);
+			recording[recording.length-1].count += amount;
+		} else {
+			recording.push({t: gameMsecs, type:"key", code: keycode, count: amount});
+		}
+		keyUpdate(keycode, amount);
 	}
 	function onkeyDown(e){
 		if(playback) return;
+		let dv = -1;
+		if( ['KeyA', 'KeyS', 'KeyD', 'KeyF'].includes(e.code)) dv = 1;
 		if( e.shiftKey && recording.length > 0){
 			// add the increment to the last entry
 			const t = recording[recording.length-1];
-			t.count++;
+			t.count += dv;
 		} else {
-			recording.push({t: gameMsecs, type:"key", code: e.code, count:1});
+			recording.push({t: gameMsecs, type:"key", code: e.code, count:dv});
 		}
-		keyUpdate(e.code, 1);
+		keyUpdate(e.code, dv);
 	}
 	function onResearchFinished(unit) {
 		unit.research_timeout = 0;
@@ -224,10 +255,10 @@
 		recording.forEach(e => {
 			if(e.type === "key"){
 				keyUpdate(e.code, e.count);
-				report += `<div>${e.t}</div><div>${wood}</div> <div>${food}</div> <div>${gold}</div> <div>${stone}</div>\n`;
+				report += `<div>${formatTime(e.t)}</div><div>${wood}</div> <div>${food}</div> <div>${gold}</div> <div>${stone}</div>\n`;
 			}
 			else if(e.type === "research") {
-				report += `<div>${e.t}-${e.code.info_list[e.code.researched].name}</div><div></div><div></div><div></div><div></div>\n`;
+				report += `<div>${formatTime(e.t)}-${e.code.info_list[e.code.researched].name}</div><div></div><div></div><div></div><div></div>\n`;
 			}
 		});
 		report += "</div>\n</body>\n</html>\n";
