@@ -13,7 +13,7 @@
 	let messageq = [];
 	let wood = 0, food = 0, gold = 0, stone = 0;
 	let startTime, gameMsecs, gameTime="0:00:00";
-	let playback = false;
+	let state = "stopped";
 	let recording = [];
 	let recIndex = 0;
 	// interval for playback or recording
@@ -72,9 +72,12 @@
 		display_techs = display_techs;
 	}
 	function startPlayback(){
+		state = "playback";
+		reset();
 		interval = setInterval( play, GAME_SECOND);    
 	}
 	function startRecording(){
+		state = "record";
 		reset();
 		recording = [];
 		interval = setInterval( record, GAME_SECOND);
@@ -93,7 +96,7 @@
 		return gameMsecs;
 	}
 	function doTimeInc() {  
-		if( playback) {
+		if( state === "playback") {
 			// fast forward adjusts gameMsecs
 			gameMsecs += GAME_SECOND;
 		} else {
@@ -146,45 +149,34 @@
 		doTimeInc();
 	}
 	function onplay(){
-		playback = true;
-		reset();
 		startPlayback();
 	}
 	function onrecord(){
-		playback = false;
 		startRecording();
 	}
-	function keyUpdate(code, count = 1){
+	function keyUpdate(code, count){
 		switch(code) {
-		case 'KeyA':
-			wood += count;
-			break;
-		case 'KeyS':
-			food += count;
-			break;
-		case 'KeyD':
-			gold += count;
-			break;
-		case 'KeyF':
-			stone += count;
-			break;
-		case 'KeyZ':
-			wood -= count;
-			if( wood < 0) wood = 0;
-			break;
-		case 'KeyX':
-			food -= count;
-			if( food < 0) food = 0;
-			break;
-		case 'KeyC':
-			gold -= count;
-			if( gold < 0) gold = 0;
-			break;
-		case 'KeyV':
-			stone -= count;
-			if( stone < 0) stone = 0;
-			break;
+			case 'KeyA':
+			case 'KeyZ':
+				wood += count;
+				break;
+			case 'KeyS':
+			case 'KeyX':
+				food += count;
+				break;
+			case 'KeyD':
+			case 'KeyC':
+				gold += count;
+				break;
+			case 'KeyF':
+			case 'KeyV':
+				stone += count;
+				break;
 		}
+		if( wood < 0) wood = 0;
+		if( food < 0) food = 0;
+		if( gold < 0) gold = 0;
+		if( stone < 0) stone = 0;
 	}
 	function getKeyCodeFromLabel(label, amount){
 		let keycode = null;
@@ -206,34 +198,28 @@
 		}
 		return keycode;
 	}
-	function ResourceUpdate(label, amount){
-		if( playback) return;
-		const keycode = getKeyCodeFromLabel(label, amount);
+	function recordUpdate(code, amount){
 		const ts = getGameTimestamp();
-		console.log("game secs:", ts);
-		// 2000 ms is one second of game time
 		if (recording.length > 0 &&
-				ts - recording[recording.length-1].t < 5000 &&
-				recording[recording.length-1].code === keycode ){
-			console.log("last gamesecs:", recording[recording.length-1].t);
+				ts - recording[recording.length-1].last_update < 5000 &&
+				recording[recording.length-1].code === code ){
 			recording[recording.length-1].count += amount;
+			recording[recording.length-1].last_update = ts;
 		} else {
-			recording.push({t: ts, type:"key", code: keycode, count: amount});
+			recording.push({t: ts, type:"key", code: code, count: amount, last_update: ts});
 		}
+	}
+	function ResourceUpdate(label, amount){
+		if( state === "playback") return;
+		const keycode = getKeyCodeFromLabel(label, amount);
+		recordUpdate(keycode, amount);
 		keyUpdate(keycode, amount);
 	}
 	function onkeyDown(e){
-		if(playback) return;
+		if(state === "playback") return;
 		let dv = -1;
 		if( ['KeyA', 'KeyS', 'KeyD', 'KeyF'].includes(e.code)) dv = 1;
-		if( e.shiftKey && recording.length > 0){
-			// add the increment to the last entry
-			const t = recording[recording.length-1];
-			t.count += dv;
-		} else {
-			const ts = getGameTimestamp();
-			recording.push({t: ts, type:"key", code: e.code, count:dv});
-		}
+		recordUpdate(e.code, dv);
 		keyUpdate(e.code, dv);
 	}
 	function onResearchFinished(unit) {
@@ -243,7 +229,7 @@
 		unit.text_timeout = setTimeout(clearTechText, 2000, unit);
 	}
 	function researched(unit) {
-		if(playback) return;
+		if(state === "playback") return;
 
 		clearTimeout(unit.research_timeout);
 
@@ -297,12 +283,12 @@
 	<button on:click={reset} >Reset</button>
 	<button on:click={onplay}>Play</button>
 	<button on:click={onrecord}>Record</button>
-	{playback?"playback":"recording"}
+	{state}
 	<button on:click={onReport}>Report</button>
 	<article class="timer">
 		Time
 		<input class="gametime" type="text" bind:value={gameTime}/>
-		{#if playback}
+		{#if state === "playback"}
 			<!-- <button on:click={timeBackward} class="transport-button">{"<"}</button> -->
 			<button on:click={timeForward} class="transport-button">></button>
 		{/if}
