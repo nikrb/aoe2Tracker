@@ -213,7 +213,7 @@
 		console.log("game secs:", ts);
 		// 2000 ms is one second of game time
 		if (recording.length > 0 &&
-				ts - recording[recording.length-1].t < 2000 &&
+				ts - recording[recording.length-1].t < 5000 &&
 				recording[recording.length-1].code === keycode ){
 			console.log("last gamesecs:", recording[recording.length-1].t);
 			recording[recording.length-1].count += amount;
