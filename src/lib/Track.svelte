@@ -29,6 +29,8 @@
 		{type: "ages", name: "Imperial Age", id: "imperial_age_de", Cost: {Food: 1000, Gold: 800}, ResearchTime: 190},
 		]
 	};
+
+	const GAME_SECOND = 588; // ms
 	
 	reset();
 	function reset(){
@@ -43,6 +45,11 @@
 		display_units.forEach(e => e.researched = 0);
 		display_techs.forEach(e => e.researched = 0);
 		recIndex = 0;
+
+		clearTimeout(ages_info.research_timeout);
+		clearTimeout(ages_info.text_timeout);
+		ages_info.research_timeout = 0;
+		ages_info.text_timeout = 0;
 
 		display_units.forEach(e => {
 			if(e.research_timeout) clearTimeout(e.research_timeout);
@@ -65,12 +72,12 @@
 		display_techs = display_techs;
 	}
 	function startPlayback(){
-		interval = setInterval( play, 625);    
+		interval = setInterval( play, GAME_SECOND);    
 	}
 	function startRecording(){
 		reset();
 		recording = [];
-		interval = setInterval( record, 625);
+		interval = setInterval( record, GAME_SECOND);
 	}
 	function formatTime(msecs){
 		let h,m,s;
@@ -81,14 +88,16 @@
 		m < 10 ? m = `0${m}`: m = `${m}`;
 		return `${h}:${m}:${s}`;
 	}
+	function getGameTimestamp() {
+		gameMsecs = (Date.now() - startTime) * 1.7;
+		return gameMsecs;
+	}
 	function doTimeInc() {  
 		if( playback) {
 			// fast forward adjusts gameMsecs
-			gameMsecs += 625;
+			gameMsecs += GAME_SECOND;
 		} else {
-			// attempt to sync with game time, doesn't work though, still gain
-			gameMsecs = (Date.now() - startTime) * 1.7;
-			console.log("new gamesecs:", gameMsecs);
+			gameMsecs = getGameTimestamp();
 		}
 		gameTime = formatTime(gameMsecs);
 	}
@@ -200,14 +209,16 @@
 	function ResourceUpdate(label, amount){
 		if( playback) return;
 		const keycode = getKeyCodeFromLabel(label, amount);
-		console.log("game secs:", gameMsecs);
+		const ts = getGameTimestamp();
+		console.log("game secs:", ts);
+		// 2000 ms is one second of game time
 		if (recording.length > 0 &&
-				gameMsecs - recording[recording.length-1].t < 1000 &&
+				ts - recording[recording.length-1].t < 2000 &&
 				recording[recording.length-1].code === keycode ){
 			console.log("last gamesecs:", recording[recording.length-1].t);
 			recording[recording.length-1].count += amount;
 		} else {
-			recording.push({t: gameMsecs, type:"key", code: keycode, count: amount});
+			recording.push({t: ts, type:"key", code: keycode, count: amount});
 		}
 		keyUpdate(keycode, amount);
 	}
@@ -220,7 +231,8 @@
 			const t = recording[recording.length-1];
 			t.count += dv;
 		} else {
-			recording.push({t: gameMsecs, type:"key", code: e.code, count:dv});
+			const ts = getGameTimestamp();
+			recording.push({t: ts, type:"key", code: e.code, count:dv});
 		}
 		keyUpdate(e.code, dv);
 	}
@@ -238,7 +250,7 @@
 		clearTimeout(unit.text_timeout);
 		unit.text_timeout = 0;
 
-		const delay = unit.info_list[unit.researched].ResearchTime * 625;
+		const delay = unit.info_list[unit.researched].ResearchTime * GAME_SECOND;
 		unit.research_timeout = setTimeout(onResearchFinished, delay, unit);
 		if( unit.researched++ > unit.available-1) unit.researched = 0;
 		// we could check info_type and just assign one, but is it worth it?
@@ -249,9 +261,7 @@
 	}
 
 	function generateReport(){
-		console.log("Recording length:", recording.length);
 		let report = htmlTemplate;
-		reset();
 		recording.forEach(e => {
 			if(e.type === "key"){
 				keyUpdate(e.code, e.count);
@@ -276,6 +286,7 @@
 		URL.revokeObjectURL(url);
 	}
 	function onReport() {
+		reset();
 		const text = generateReport();
 		saveReport(text);
 	}
