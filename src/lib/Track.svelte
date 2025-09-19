@@ -30,8 +30,10 @@
 		]
 	};
 
-	const GAME_SECOND = 588; // ms
-	
+	// TODO: make the game second adjustable?
+	let game_second = 588; // ms
+	let fade_tech_text = false;
+
 	reset();
 	function reset(){
 		techText = "";
@@ -74,13 +76,13 @@
 	function startPlayback(){
 		state = "playback";
 		reset();
-		interval = setInterval( play, GAME_SECOND);    
+		interval = setInterval( play, game_second);    
 	}
 	function startRecording(){
 		state = "record";
 		reset();
 		recording = [];
-		interval = setInterval( record, GAME_SECOND);
+		interval = setInterval( record, game_second);
 	}
 	function formatTime(msecs){
 		let h,m,s;
@@ -98,7 +100,7 @@
 	function doTimeInc() {  
 		if( state === "playback") {
 			// fast forward adjusts gameMsecs
-			gameMsecs += GAME_SECOND;
+			gameMsecs += game_second;
 		} else {
 			gameMsecs = getGameTimestamp();
 		}
@@ -106,7 +108,7 @@
 	}
 	function clearTechText(unit){
 		unit.text_timeout = 0;
-		techText = "";
+		fade_tech_text = true;
 	}
 	function play() {
 		doTimeInc();
@@ -117,6 +119,7 @@
 				else {
 					clearTimeout(unit.text_timeout);
 					const unit = recording[recIndex].code;
+					fade_tech_text = false;
 					techText = unit.info_list[unit.researched].name;
 					unit.text_timeout = setTimeout(clearTechText, 2000, unit);
 
@@ -224,6 +227,7 @@
 	}
 	function onResearchFinished(unit) {
 		unit.research_timeout = 0;
+		fade_tech_text = false;
 		clearTimeout(unit.text_timeout);
 		techText = unit.info_list[unit.researched-1].name+" finished";
 		unit.text_timeout = setTimeout(clearTechText, 2000, unit);
@@ -236,9 +240,9 @@
 		clearTimeout(unit.text_timeout);
 		unit.text_timeout = 0;
 
-		const delay = unit.info_list[unit.researched].ResearchTime * GAME_SECOND;
+		const delay = unit.info_list[unit.researched].ResearchTime * 1000;
 		unit.research_timeout = setTimeout(onResearchFinished, delay, unit);
-		if( unit.researched++ > unit.available-1) unit.researched = 0;
+		if( unit.researched < unit.available-1) unit.researched++;
 		// we could check info_type and just assign one, but is it worth it?
 		ages_info = ages_info;
 		display_units = display_units;
@@ -254,7 +258,7 @@
 				report += `<div>${formatTime(e.t)}</div><div>${wood}</div> <div>${food}</div> <div>${gold}</div> <div>${stone}</div>\n`;
 			}
 			else if(e.type === "research") {
-				report += `<div>${formatTime(e.t)}-${e.code.info_list[e.code.researched].name}</div><div></div><div></div><div></div><div></div>\n`;
+				report += `<div>${formatTime(e.t)}-${e.code.info_list[e.code.researched++].name}</div><div></div><div></div><div></div><div></div>\n`;
 			}
 		});
 		report += "</div>\n</body>\n</html>\n";
@@ -292,8 +296,7 @@
 			<!-- <button on:click={timeBackward} class="transport-button">{"<"}</button> -->
 			<button on:click={timeForward} class="transport-button">></button>
 		{/if}
-		<!-- <label class:fadeit={techText !== ""}>{techText}</label> -->
-		{techText}
+		<label class:fadeit={fade_tech_text}>{techText}</label>
 	</article>
   	<article>
 		<div>
@@ -331,7 +334,7 @@
   }
   label.fadeit {
     opacity: 0;
-    transition: opacity 2s ease;
+    transition: opacity 5s ease;
   }
   .transport-button {
     padding: 2px 6px;

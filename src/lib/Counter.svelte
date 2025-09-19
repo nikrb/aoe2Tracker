@@ -50,7 +50,4 @@
 		font-size: 1rem;
 		padding: 0.5rem;
 	}
-	.label {
-		margin-right: 0.5em;
-	}
 </style>
